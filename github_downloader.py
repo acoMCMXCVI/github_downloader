@@ -80,24 +80,17 @@ class Folder:
     def download(self, path = ''):
         global s
 
-        path = os.path.join(path,self.name)
+        path = os.path.join(path, self.name)
         if os.path.isdir(path):
             shutil.rmtree(path)
 
         os.mkdir(path)
 
-        for folder in self.folders:
-            folder.download(path)
+        for f in self.folders:
+            f.download(path)
 
-        for file in self.files:
-            url = file.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
-
-            r = s.get(url)
-
-            with open(os.path.join(path, file.name), 'wb') as f:
-                f.write(r.content)
-
-            print('Preuzet fajl: ' + file.name)
+        for f in self.files:
+            f.download(path)
 
 class File:
 
@@ -106,6 +99,17 @@ class File:
         self.name = name
         self.href = href
 
+    def download(self, path = ''):
+        global s
+
+        url = self.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
+
+        r = s.get(url)
+
+        with open(os.path.join(path, self.name), 'wb') as f:
+            f.write(r.content)
+
+        print('Preuzet fajl: ' + self.name)
 
 def simple_get(url):
     global s
@@ -128,4 +132,4 @@ if __name__ == '__main__':
     with open('tree.txt', 'w') as f:
         f.write(tree)
 
-    #repo.download()
+    repo.download()
