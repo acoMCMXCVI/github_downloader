@@ -7,6 +7,7 @@ import os
 import shutil
 
 s = requests.Session()
+num_of_files = 0
 
 
 class Folder:
@@ -20,6 +21,7 @@ class Folder:
 
 
     def find(self):
+        global num_of_files
 
         content = simple_get(self.href)
 
@@ -32,7 +34,7 @@ class Folder:
                     href = 'https://github.com/' + item['href']
                     name = item.text
 
-                    print(name)
+                    print(href.replace('https://github.com/', '').replace('sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity', ''))
 
                     self.folders.append(Folder(self.href, name, href))
 
@@ -42,6 +44,7 @@ class Folder:
 
                     self.files.append(File(self.href, name, href))
 
+                    num_of_files = num_of_files + 1
 
         for folder in self.folders:
             folder.find()
@@ -60,6 +63,7 @@ class Folder:
 
     def download(self, path = ''):
         global s
+        global num_of_files
 
         path = os.path.join(path,self.name)
         if os.path.isdir(path):
@@ -70,6 +74,7 @@ class Folder:
         for folder in self.folders:
             folder.download(path)
 
+
         for file in self.files:
             url = file.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
 
@@ -78,7 +83,8 @@ class Folder:
             with open(os.path.join(path, file.name), 'wb') as f:
                 f.write(r.content)
 
-            print('Preuzet fajl: ' + file.name)
+            num_of_files = num_of_files - 1
+            print(str(num_of_files) + '\tPreuzet fajl: ' + file.name)
 
 class File:
 
@@ -100,8 +106,10 @@ def simple_get(url):
 
 if __name__ == '__main__':
 
-    repo = Folder(None,'DAPU','https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit')
+    repo = Folder(None,'Unity','https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
     repo.find()
+
+    print('Number of files: ' + str(num_of_files))
 
     tree = repo.tree()
     print(tree)
