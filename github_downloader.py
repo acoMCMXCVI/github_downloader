@@ -1,5 +1,12 @@
+import requests
 from requests import get
 from bs4 import BeautifulSoup
+
+import time
+import os
+import shutil
+
+s = requests.Session()
 
 
 class Folder:
@@ -25,6 +32,8 @@ class Folder:
                     href = 'https://github.com/' + item['href']
                     name = item.text
 
+                    print(name)
+
                     self.folders.append(Folder(self.href, name, href))
 
                 else:
@@ -49,6 +58,27 @@ class Folder:
         return s
 
 
+    def download(self, path = ''):
+        global s
+
+        path = os.path.join(path,self.name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+
+        os.mkdir(path)
+
+        for folder in self.folders:
+            folder.download(path)
+
+        for file in self.files:
+            url = file.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
+
+            r = s.get(url)
+
+            with open(os.path.join(path, file.name), 'wb') as f:
+                f.write(r.content)
+
+            print('Preuzet fajl: ' + file.name)
 
 class File:
 
@@ -59,7 +89,9 @@ class File:
 
 
 def simple_get(url):
-    resp = get(url, stream=True)
+    global s
+
+    resp = s.get(url, stream=True)
     content = BeautifulSoup(resp.text, 'html.parser')
 
     return content
@@ -68,6 +100,13 @@ def simple_get(url):
 
 if __name__ == '__main__':
 
-    repo = Folder(None,'Unity','https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
+    repo = Folder(None,'DAPU','https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit')
     repo.find()
-    print(repo.tree())
+
+    tree = repo.tree()
+    print(tree)
+
+    with open('tree.txt', 'w') as f:
+        f.write(tree)
+
+    repo.download()
