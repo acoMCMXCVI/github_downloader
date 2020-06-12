@@ -54,7 +54,26 @@ class Folder:
             for i, x in enumerate(xs):
                 yield (i == last_i, x)
         
-        b = self.name + '/\n'
+        def size_format(s):
+            if s >= 1024*1024*1024:
+                s /= 1024*1024*1024
+                p = 'GiB'
+            elif s >= 1024*1024:
+                s /= 1024*1024
+                p = 'MiB'
+            elif s >= 1024:
+                s /= 1024
+                p = 'KiB'
+            else:
+                p = 'B'
+            return '{:.2f}{}'.format(s, p)
+        def size_prefix(s):
+            if s != None:
+                return size_format(s) + '  '
+            else:
+                return ''
+                
+        b = size_prefix(self.size) + self.name + '/\n'
         
         for last, f in enumerate_last(self.folders):
             if last and len(self.files) == 0:
@@ -71,9 +90,9 @@ class Folder:
                 
         for last, f in enumerate_last(self.files):
             if last:
-                b += '└── ' + f.name + '\n'
+                b += '└── ' + size_prefix(f.size) + f.name + '\n'
             else:
-                b += '├── ' + f.name + '\n'
+                b += '├── ' + size_prefix(f.size) + f.name + '\n'
         
         return b
 
@@ -111,8 +130,8 @@ class File:
     def collect_size(self):
         global s
 
+        #FIXME Not giving size.
         url = self.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
-
         r = s.head(url)
         self.size = int(r.headers['content-length'])
         
@@ -152,4 +171,4 @@ if __name__ == '__main__':
     with open('tree.txt', 'w') as f:
         f.write(tree)
 
-    #repo.download()
+    repo.download()
