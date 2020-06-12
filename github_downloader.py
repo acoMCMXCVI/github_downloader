@@ -27,7 +27,7 @@ class Folder:
         items = content.findAll('a', class_='js-navigation-open')
 
         for item in items:
-            if len(item['class']) == 1 and item.text != '..':
+            if len(item['class']) <= 2 and item.text != '..':
                 if item['href'].find('tree') != -1:
                     href = 'https://github.com/' + item['href']
                     name = item.text
