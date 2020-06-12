@@ -1,11 +1,8 @@
-import numpy as np
-from selenium import webdriver
-
-browser = webdriver.Chrome()
+from requests import get
+from bs4 import BeautifulSoup
 
 
 class Folder:
-
 
     def __init__(self, rootFolder, name, href):
         self.root = rootFolder
@@ -16,26 +13,22 @@ class Folder:
 
 
     def find(self):
-        global brower
-        browser.get(self.href)
+
+        content = simple_get(self.href)
 
 
-        items = browser.find_elements_by_class_name('js-navigation-open ')
-
+        items = content.findAll('a', class_='js-navigation-open')
 
         for item in items:
-
-            if item.get_attribute('href') != '' and item.text != '..':
-
-                if item.get_attribute('href').find('tree') != -1:
-
-                    href = item.get_attribute('href')
+            if len(item['class']) == 1 and item.text != '..':
+                if item['href'].find('tree') != -1:
+                    href = 'https://github.com/' + item['href']
                     name = item.text
 
                     self.folders.append(Folder(self.href, name, href))
 
                 else:
-                    href = item.get_attribute('href')
+                    href = 'https://github.com/' + item['href']
                     name = item.text
 
                     self.files.append(File(self.href, name, href))
@@ -52,7 +45,7 @@ class Folder:
 
         for file in self.files:
             s += ('\t'*(depth+1)) + file.name + '\n'
-        
+
         return s
 
 
@@ -64,8 +57,17 @@ class File:
         self.name = name
         self.href = href
 
+
+def simple_get(url):
+    resp = get(url, stream=True)
+    content = BeautifulSoup(resp.text, 'html.parser')
+
+    return content
+
+
+
 if __name__ == '__main__':
 
-    repo = Folder(None,'AI4Animation','https://github.com/sebastianstarke/AI4Animation/tree/master/')
+    repo = Folder(None,'Unity','https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
     repo.find()
     print(repo.tree())
