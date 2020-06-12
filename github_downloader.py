@@ -38,6 +38,8 @@ class Folder:
                     href = 'https://github.com/' + item['href']
                     name = item.text
 
+                    if name == 'scripting':
+                        continue
                     self.files.append(File(self.href, name, href))
 
 
@@ -46,14 +48,33 @@ class Folder:
 
 
     def tree(self, depth = 0):
-        s = ('\t'*depth) + self.name + '/\n'
-        for folder in self.folders:
-            s += folder.tree(depth+1)
-
-        for file in self.files:
-            s += ('\t'*(depth+1)) + file.name + '\n'
-
-        return s
+        def enumerate_last(xs):
+            last_i = len(xs)-1
+            for i, x in enumerate(xs):
+                yield (i == last_i, x)
+        
+        b = self.name + '/\n'
+        
+        for last, f in enumerate_last(self.folders):
+            if last and len(self.files) == 0:
+                b1 = '└── '
+                b2 = '    '
+            else:
+                b1 = '├── '
+                b2 = '│   '
+                
+            sub_b = f.tree(depth+1).strip().split('\n')
+            b += b1 + sub_b[0] + '\n'
+            for j, sb in enumerate(sub_b[1:]):
+                b += b2 + sb + '\n'
+                
+        for last, f in enumerate_last(self.files):
+            if last:
+                b += '└── ' + f.name + '\n'
+            else:
+                b += '├── ' + f.name + '\n'
+        
+        return b
 
 
     def download(self, path = ''):
@@ -107,4 +128,4 @@ if __name__ == '__main__':
     with open('tree.txt', 'w') as f:
         f.write(tree)
 
-    repo.download()
+    #repo.download()
