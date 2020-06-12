@@ -17,6 +17,7 @@ class Folder:
         self.href = href
         self.files = []
         self.folders = []
+        self.size = None
 
 
     def find(self):
@@ -76,7 +77,14 @@ class Folder:
         
         return b
 
-
+    def collect_size(self):
+        self.size = 0
+        for f in self.folders:
+            self.size += f.collect_size()
+        for f in self.files:
+            self.size += f.collect_size()
+        return self.size
+        
     def download(self, path = ''):
         global s
 
@@ -98,6 +106,17 @@ class File:
         self.root = rootFolder
         self.name = name
         self.href = href
+        self.size = None
+
+    def collect_size(self):
+        global s
+
+        url = self.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
+
+        r = s.head(url)
+        self.size = int(r.headers['content-length'])
+        
+        return self.size
 
     def download(self, path = ''):
         global s
@@ -125,11 +144,12 @@ if __name__ == '__main__':
 
     repo = Folder(None,'DAPU','https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit')
     repo.find()
-
+    repo.collect_size()
+    
     tree = repo.tree()
     print(tree)
 
     with open('tree.txt', 'w') as f:
         f.write(tree)
 
-    repo.download()
+    #repo.download()
