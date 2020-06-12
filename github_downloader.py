@@ -6,6 +6,7 @@ browser = webdriver.Chrome()
 
 class Folder:
 
+
     def __init__(self, rootFolder, name, href):
         self.root = rootFolder
         self.name = name
@@ -39,24 +40,21 @@ class Folder:
 
                     self.files.append(File(self.href, name, href))
 
-        self.print_childs()
 
-        self.stack_of_folders = self.folders
-
-        while self.stack_of_folders != []:
-            folder = self.stack_of_folders.pop()
+        for folder in self.folders:
             folder.find()
 
 
-    def print_childs(self):
-        print('*************** Ja sam folder: ' + str(self.name))
-        print('****Folders:')
+    def tree(self, depth = 0):
+        s = ('\t'*depth) + self.name + '/\n'
         for folder in self.folders:
-            print(folder.name)
+            s += folder.tree(depth+1)
 
-        print('****Files:')
         for file in self.files:
-            print(file.name)
+            s += ('\t'*(depth+1)) + file.name + '\n'
+        
+        return s
+
 
 
 class File:
@@ -70,3 +68,4 @@ if __name__ == '__main__':
 
     repo = Folder(None,'AI4Animation','https://github.com/sebastianstarke/AI4Animation/tree/master/')
     repo.find()
+    print(repo.tree())
