@@ -32,8 +32,6 @@ class Folder:
                     href = 'https://github.com/' + item['href']
                     name = item.text
 
-                    print(name)
-
                     self.folders.append(Folder(self.href, name, href))
 
                 else:
