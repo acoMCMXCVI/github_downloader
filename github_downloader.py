@@ -1,67 +1,8 @@
 import numpy as np
 from selenium import webdriver
 
-class Root:
+browser = webdriver.Chrome()
 
-    browser = webdriver.Chrome()
-    repo = None
-    folders = []
-    files = []
-    stack_of_f = []
-
-    def __init__(self, repository):
-        self.repo = repository
-
-    def find(self):
-        # otvara link
-        self.browser.get(self.repo)
-        #self.browser.implicitly_wait(1)
-
-        # pronalazi sve iteme u folderu
-        items = self.browser.find_elements_by_class_name('js-navigation-open ')
-
-        for item in items:
-
-            if item.get_attribute('href') != '':
-
-                if item.get_attribute('href').find('tree') != -1:
-
-                    href = item.get_attribute('href')
-                    name = item.text
-                    # print(href)
-
-
-                    folder = Folder(self.repo, name, href)
-                    self.folders.append(folder)
-
-                else:
-
-                    href = item.get_attribute('href')
-                    name = item.text
-                    # print(href)
-
-
-                    self.files.append(File(self.repo, name, href))
-
-        self.print_childs()
-
-        self.stack_of_f = self.folders.copy()
-
-        while self.stack_of_f != []:
-            folder = self.stack_of_f.pop()
-            folder.find(self.browser)
-
-
-
-    def print_childs(self):
-        print('//////////Ja sam folder: ' + str(self.repo))
-        print('****Folders:')
-        for folder in self.folders:
-            print(str(folder.name))
-
-        print('****Files:')
-        for file in self.files:
-            print(str(file.name))
 
 class Folder:
 
@@ -80,7 +21,8 @@ class Folder:
         files = []
 
 
-    def find(self, browser):
+    def find(self):
+        global brower
         browser.get(self.href)
         #print(self.files)
         #print('usao')
@@ -118,7 +60,7 @@ class Folder:
 
         while self.stack_of_folders != []:
             folder = self.stack_of_folders.pop()
-            folder.find(browser)
+            folder.find()
 
 
     def print_childs(self):
@@ -147,5 +89,5 @@ class File:
 
 if __name__ == '__main__':
 
-    repo = Root('https://github.com/sebastianstarke/AI4Animation/tree/master/')
+    repo = Folder(None,'AI4Animation','https://github.com/sebastianstarke/AI4Animation/tree/master/')
     repo.find()
