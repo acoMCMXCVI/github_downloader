@@ -21,9 +21,10 @@ class Folder:
 
 
     def find(self):
+        global s
 
-        content = simple_get(self.href)
-
+        resp = s.get(self.href, stream=True)
+        content = BeautifulSoup(resp.text, 'html.parser')
 
         items = content.findAll('a', class_='js-navigation-open')
 
@@ -149,14 +150,6 @@ class File:
             f.write(r.content)
 
         print('Preuzet fajl: ' + self.name)
-
-def simple_get(url):
-    global s
-
-    resp = s.get(url, stream=True)
-    content = BeautifulSoup(resp.text, 'html.parser')
-
-    return content
 
 
 
