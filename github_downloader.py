@@ -7,6 +7,7 @@ import os
 import shutil
 
 s = requests.Session()
+num_of_files = 0
 
 
 class Folder:
@@ -37,6 +38,7 @@ class Folder:
                 else:
                     self.files.append(File(self.href, name, href))
 
+                    num_of_files = num_of_files + 1
 
         for folder in self.folders:
             folder.find()
@@ -103,6 +105,7 @@ class Folder:
         
     def download(self, path = ''):
         global s
+        global num_of_files
 
         path = os.path.join(path, self.name)
         if os.path.isdir(path):
@@ -155,7 +158,7 @@ class File:
 
 if __name__ == '__main__':
 
-    repo = Folder(None,'DAPU','https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit')
+    repo = Folder(None,'Unity','https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
     repo.find()
     repo.collect_size()
     
