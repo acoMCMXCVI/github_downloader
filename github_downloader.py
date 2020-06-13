@@ -68,7 +68,7 @@ class Folder:
                 p = 'KiB'
             else:
                 p = '  B'
-            return '{: 6.2f} {}'.format(s, p)
+            return '{: 7.2f} {}'.format(s, p)
         def size_prefix(s):
             if s != None:
                 return size_format(s) + '  '
@@ -160,7 +160,8 @@ class File:
 
 if __name__ == '__main__':
 
-    repo = Folder(None,'Unity','https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
+    repo = Folder(None, 'DAPU', 'https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit')
+    #repo = Folder(None, 'Unity', 'https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
     repo.find()
     repo.collect_size()
     
