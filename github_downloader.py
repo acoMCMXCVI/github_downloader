@@ -160,7 +160,7 @@ class File:
 
 if __name__ == '__main__':
 
-    repo = Folder(None, 'DAPU', 'https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit')
+    repo = Folder(None, 'DAPU', 'https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit/tree/master/Images')
     #repo = Folder(None, 'Unity', 'https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
     repo.find()
     repo.collect_size()
