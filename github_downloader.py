@@ -18,73 +18,108 @@ class Folder:
         self.href = href
         self.files = []
         self.folders = []
+        self.size = None
 
 
     def find(self):
-        global num_of_files
+        global s
 
-        content = simple_get(self.href)
-
+        resp = s.get(self.href, stream=True)
+        content = BeautifulSoup(resp.text, 'html.parser')
 
         items = content.findAll('a', class_='js-navigation-open')
 
         for item in items:
-            if len(item['class']) == 1 and item.text != '..':
+            if len(item['class']) <= 2 and item.text != '..':
+                name = item.text
+                href = 'https://github.com' + item['href']
                 if item['href'].find('tree') != -1:
-                    href = 'https://github.com/' + item['href']
-                    name = item.text
-
-                    print(href.replace('https://github.com/', '').replace('sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity', ''))
-
                     self.folders.append(Folder(self.href, name, href))
-
                 else:
-                    href = 'https://github.com/' + item['href']
-                    name = item.text
-
                     self.files.append(File(self.href, name, href))
 
-                    num_of_files = num_of_files + 1
+        for f in self.folders:
+            f.find()
 
-        for folder in self.folders:
-            folder.find()
-
+    def get_number_of_files(self):
+        n = len(self.files)
+        for f in self.folders:
+            n += f.get_number_of_files()
+        return n
 
     def tree(self, depth = 0):
-        s = ('\t'*depth) + self.name + '/\n'
-        for folder in self.folders:
-            s += folder.tree(depth+1)
+        def enumerate_last(xs):
+            last_i = len(xs)-1
+            for i, x in enumerate(xs):
+                yield (i == last_i, x)
+        
+        def size_format(s):
+            if s >= 1024*1024*1024*1024:
+                s /= 1024*1024*1024*1024
+                p = 'TiB'
+            elif s >= 1024*1024*1024:
+                s /= 1024*1024*1024
+                p = 'GiB'
+            elif s >= 1024*1024:
+                s /= 1024*1024
+                p = 'MiB'
+            elif s >= 1024:
+                s /= 1024
+                p = 'KiB'
+            else:
+                p = '  B'
+            return '{: 7.2f} {}'.format(s, p)
+        def size_prefix(s):
+            if s != None:
+                return size_format(s) + '  '
+            else:
+                return ''
+                
+        b = size_prefix(self.size) + self.name + '/\n'
+        
+        for last, f in enumerate_last(self.folders):
+            if last and len(self.files) == 0:
+                b1 = '└── '
+                b2 = '    '
+            else:
+                b1 = '├── '
+                b2 = '│   '
+                
+            sub_b = f.tree(depth+1).strip().split('\n')
+            b += b1 + sub_b[0] + '\n'
+            for j, sb in enumerate(sub_b[1:]):
+                b += b2 + sb + '\n'
+                
+        for last, f in enumerate_last(self.files):
+            if last:
+                b += '└── ' + size_prefix(f.size) + f.name + '\n'
+            else:
+                b += '├── ' + size_prefix(f.size) + f.name + '\n'
+        
+        return b
 
-        for file in self.files:
-            s += ('\t'*(depth+1)) + file.name + '\n'
-
-        return s
-
-
+    def collect_size(self):
+        self.size = 0
+        for f in self.folders:
+            self.size += f.collect_size()
+        for f in self.files:
+            self.size += f.collect_size()
+        return self.size
+        
     def download(self, path = ''):
         global s
-        global num_of_files
 
-        path = os.path.join(path,self.name)
+        path = os.path.join(path, self.name)
         if os.path.isdir(path):
             shutil.rmtree(path)
 
         os.mkdir(path)
 
-        for folder in self.folders:
-            folder.download(path)
+        for f in self.folders:
+            f.download(path)
 
-
-        for file in self.files:
-            url = file.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
-
-            r = s.get(url)
-
-            with open(os.path.join(path, file.name), 'wb') as f:
-                f.write(r.content)
-
-            num_of_files = num_of_files - 1
-            print(str(num_of_files) + '\tPreuzet fajl: ' + file.name)
+        for f in self.files:
+            f.download(path)
 
 class File:
 
@@ -92,25 +127,46 @@ class File:
         self.root = rootFolder
         self.name = name
         self.href = href
+        self.size = None
 
+    def collect_size(self):
+        global s
 
-def simple_get(url):
-    global s
+        url = self.href
+        url = url.replace('github.com/', 'raw.githubusercontent.com/')
+        url = url.replace('blob/', '')
+        
+        r = s.head(url)
+        
+        self.size = int(r.headers['content-length'])
+        
+        return self.size
 
-    resp = s.get(url, stream=True)
-    content = BeautifulSoup(resp.text, 'html.parser')
+    def download(self, path = ''):
+        global s
+        
+        url = self.href
+        url = url.replace('github.com/', 'raw.githubusercontent.com/')
+        url = url.replace('blob/', '')
 
-    return content
+        r = s.get(url)
+
+        with open(os.path.join(path, self.name), 'wb') as f:
+            f.write(r.content)
+
+        print('Preuzet fajl: ' + self.name)
 
 
 
 if __name__ == '__main__':
 
-    repo = Folder(None,'Unity','https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
+    repo = Folder(None, 'DAPU', 'https://github.com/acoMCMXCVI/Data-Analysis-and-Processing-Unit/tree/master/Images')
+    #repo = Folder(None, 'Unity', 'https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
     repo.find()
-
-    print('Number of files: ' + str(num_of_files))
-
+    repo.collect_size()
+    
+    print('Number of files: ', repo.get_number_of_files())
+    
     tree = repo.tree()
     print(tree)
 
