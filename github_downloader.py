@@ -38,11 +38,14 @@ class Folder:
                 else:
                     self.files.append(File(self.href, name, href))
 
-                    num_of_files = num_of_files + 1
+        for f in self.folders:
+            f.find()
 
-        for folder in self.folders:
-            folder.find()
-
+    def get_number_of_files(self):
+        n = len(self.files)
+        for f in self.folders:
+            n += f.get_number_of_files()
+        return n
 
     def tree(self, depth = 0):
         def enumerate_last(xs):
@@ -105,7 +108,6 @@ class Folder:
         
     def download(self, path = ''):
         global s
-        global num_of_files
 
         path = os.path.join(path, self.name)
         if os.path.isdir(path):
@@ -161,6 +163,8 @@ if __name__ == '__main__':
     repo = Folder(None,'Unity','https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
     repo.find()
     repo.collect_size()
+    
+    print('Number of files: ', repo.get_number_of_files())
     
     tree = repo.tree()
     print(tree)
