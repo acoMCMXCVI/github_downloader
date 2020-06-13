@@ -9,11 +9,12 @@ import shutil
 s = requests.Session()
 num_of_files = 0
 
-
+# folders class
 class Folder:
 
-    root_name = 'tmp'
+    root_name = 'tmp'           # root folder for downloading
 
+    # class constructor
     def __init__(self, rootFolder, name, href):
         self.root = rootFolder
         self.name = name
@@ -22,6 +23,8 @@ class Folder:
         self.folders = []
         self.size = None
 
+
+    # function find structure of repository
     def find(self):
         global s
 
@@ -38,7 +41,7 @@ class Folder:
 
                     self.folders.append(Folder(self.href, name, href))
                 else:
-
+                    # create file link redy for downloading
                     href = 'https://raw.githubusercontent.com/' + item['href']
                     href = href.replace('blob/', '')
 
@@ -47,14 +50,19 @@ class Folder:
         for f in self.folders:
             f.find()
 
+
+    # function count # of files
     def get_number_of_files(self):
         n = len(self.files)
         for f in self.folders:
             n += f.get_number_of_files()
         return n
 
+
+    # function make visualisation of repository structure
     def tree(self, depth = 0):
 
+        # function return info does file last in the folder
         def enumerate_last(xs):
             last_i = len(xs)-1
             for i, x in enumerate(xs):
@@ -110,6 +118,7 @@ class Folder:
         return b
 
 
+    # function collect files sizes
     def collect_size(self):
         self.size = 0
         for f in self.folders:
@@ -119,11 +128,11 @@ class Folder:
         return self.size
 
 
+    # function downloads files
     def download(self):
         global s
 
         path = self.href[self.href.find('master') + 7:]
-
         path = os.path.join(self.root_name, path)
 
         if os.path.isdir(path):
@@ -137,8 +146,11 @@ class Folder:
         for f in self.files:
             f.download(path)
 
+
+# folders class
 class File:
 
+    # class constructor
     def __init__(self, rootFolder, name, href):
         self.root = rootFolder
         self.name = name
@@ -146,11 +158,11 @@ class File:
         self.size = None
 
 
+    # function download file
     def download(self, path = ''):
         global s
 
         url = self.href
-
         r = s.get(url)
 
         with open(os.path.join(path, self.name), 'wb') as f:
@@ -159,17 +171,16 @@ class File:
         print('File: ' + self.name + 'is downloaded.')
 
 
+    # function collect size of file
     def collect_size(self):
         global s
 
         url = self.href
-
         r = s.head(url)
 
         self.size = int(r.headers['content-length'])
 
         return self.size
-
 
 
 
