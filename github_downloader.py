@@ -29,18 +29,11 @@ class Folder:
 
         for item in items:
             if len(item['class']) <= 2 and item.text != '..':
+                name = item.text
+                href = 'https://github.com' + item['href']
                 if item['href'].find('tree') != -1:
-                    href = 'https://github.com/' + item['href']
-                    name = item.text
-
                     self.folders.append(Folder(self.href, name, href))
-
                 else:
-                    href = 'https://github.com/' + item['href']
-                    name = item.text
-
-                    if name == 'scripting':
-                        continue
                     self.files.append(File(self.href, name, href))
 
 
@@ -55,7 +48,10 @@ class Folder:
                 yield (i == last_i, x)
         
         def size_format(s):
-            if s >= 1024*1024*1024:
+            if s >= 1024*1024*1024*1024:
+                s /= 1024*1024*1024*1024
+                p = 'TiB'
+            elif s >= 1024*1024*1024:
                 s /= 1024*1024*1024
                 p = 'GiB'
             elif s >= 1024*1024:
@@ -65,8 +61,8 @@ class Folder:
                 s /= 1024
                 p = 'KiB'
             else:
-                p = 'B'
-            return '{:.2f}{}'.format(s, p)
+                p = '  B'
+            return '{: 6.2f} {}'.format(s, p)
         def size_prefix(s):
             if s != None:
                 return size_format(s) + '  '
@@ -130,17 +126,22 @@ class File:
     def collect_size(self):
         global s
 
-        #FIXME Not giving size.
-        url = self.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
+        url = self.href
+        url = url.replace('github.com/', 'raw.githubusercontent.com/')
+        url = url.replace('blob/', '')
+        
         r = s.head(url)
+        
         self.size = int(r.headers['content-length'])
         
         return self.size
 
     def download(self, path = ''):
         global s
-
-        url = self.href.replace('github.com/', 'raw.github.com/').replace('blob/', '')
+        
+        url = self.href
+        url = url.replace('github.com/', 'raw.githubusercontent.com/')
+        url = url.replace('blob/', '')
 
         r = s.get(url)
 
