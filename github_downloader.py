@@ -7,7 +7,6 @@ import os
 import shutil
 
 s = requests.Session()
-num_of_files = 0
 
 # folders class
 class Folder:
@@ -40,6 +39,8 @@ class Folder:
                     href = 'https://github.com' + item['href']
 
                     self.folders.append(Folder(self.href, name, href))
+
+                    print(name)
                 else:
                     # create file link redy for downloading
                     href = 'https://raw.githubusercontent.com/' + item['href']
@@ -68,83 +69,71 @@ class Folder:
             for i, x in enumerate(xs):
                 yield (i == last_i, x)
 
+        b = self.name + '/\n'
 
-        def size_format(s):
-            if s >= 1024*1024*1024*1024:
-                s /= 1024*1024*1024*1024
-                p = 'TiB'
-            elif s >= 1024*1024*1024:
-                s /= 1024*1024*1024
-                p = 'GiB'
-            elif s >= 1024*1024:
-                s /= 1024*1024
-                p = 'MiB'
-            elif s >= 1024:
-                s /= 1024
-                p = 'KiB'
-            else:
-                p = '  B'
-            return '{: 7.2f} {}'.format(s, p)
-
-
-        def size_prefix(s):
-            if s != None:
-                return size_format(s) + '  '
-            else:
-                return ''
-
-
-        b = size_prefix(self.size) + self.name + '/\n'
 
         for last, f in enumerate_last(self.folders):
             if last and len(self.files) == 0:
                 b1 = '└── '
                 b2 = '    '
+
             else:
                 b1 = '├── '
                 b2 = '│   '
 
             sub_b = f.tree(depth+1).strip().split('\n')
+
+
             b += b1 + sub_b[0] + '\n'
             for j, sb in enumerate(sub_b[1:]):
                 b += b2 + sb + '\n'
 
+
         for last, f in enumerate_last(self.files):
             if last:
-                b += '└── ' + size_prefix(f.size) + f.name + '\n'
+                b += '└── ' + f.name + '\n'
             else:
-                b += '├── ' + size_prefix(f.size) + f.name + '\n'
+                b += '├── ' + f.name + '\n'
 
         return b
 
-
-    # function collect files sizes
-    def collect_size(self):
-        self.size = 0
-        for f in self.folders:
-            self.size += f.collect_size()
-        for f in self.files:
-            self.size += f.collect_size()
-        return self.size
-
-
     # function downloads files
-    def download(self):
+    def download(self, type = 'full'):
         global s
 
         path = self.href[self.href.find('master') + 7:]
         path = os.path.join(self.root_name, path)
 
+        # if there is path
         if os.path.isdir(path):
-            shutil.rmtree(path)
+            if type == 'full':
+                shutil.rmtree(path)
+                os.makedirs(path)
 
-        os.makedirs(path)
+                files_download = True
+
+            elif type == 'skip':
+                # check does all files is here
+                if len([f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]) == len(self.files):
+                    print('Folder exist - ' + path)
+                    files_download = False
+                else:
+                    files_download = True
+
+        else:
+            os.makedirs(path)
+            files_download = True
+
 
         for f in self.folders:
-            f.download()
+            f.download(type)
 
-        for f in self.files:
-            f.download(path)
+        if files_download:
+            print('Downloading folder - ' + path)
+
+            for f in self.files:
+                f.download(path)
+
 
 
 # folders class
@@ -168,35 +157,20 @@ class File:
         with open(os.path.join(path, self.name), 'wb') as f:
             f.write(r.content)
 
-        print('File: ' + self.name + 'is downloaded.')
-
-
-    # function collect size of file
-    def collect_size(self):
-        global s
-
-        url = self.href
-        r = s.head(url)
-
-        self.size = int(r.headers['content-length'])
-
-        return self.size
+        print('\tFile: ' + self.name + 'is downloaded.')
 
 
 
 if __name__ == '__main__':
 
-    repo = Folder(None, '', 'https://github.com/acoMCMXCVI/Unit-for-Visualization-of-Expressions-UE4/tree/master/')
-    #repo = Folder(None, 'Unity', 'https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity')
+    #repo = Folder(None, '', 'https://github.com/acoMCMXCVI/Unit-for-Visualization-of-Expressions-UE4/tree/master/')
+    repo = Folder(None, 'Unity', 'https://github.com/sebastianstarke/AI4Animation/tree/master/AI4Animation/SIGGRAPH_Asia_2019/Unity/Assets/MotionCapture')
 
     repo.find()
-    #repo.collect_size()
-
     print('Number of files: ', repo.get_number_of_files())
-
     tree = repo.tree()
 
     with open('tree.txt', 'w', encoding="utf-8") as f:
         f.write(tree)
 
-    repo.download()
+    repo.download('skip')
